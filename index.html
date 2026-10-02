@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>우리 고양이 냥BTI 테스트 🐾</title>
+    <style>
+        body { font-family: 'Pretendard', sans-serif; background-color: #FFF0F5; text-align: center; color: #5D4037; margin: 0; padding: 20px; }
+        .container { max-width: 500px; background: white; margin: 50px auto; padding: 30px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: 3px solid #FFC0CB; }
+        h1 { font-size: 24px; margin-bottom: 20px; line-height: 1.4; }
+        .btn { display: block; width: 100%; background-color: #FFD1DC; color: #5D4037; padding: 15px; margin: 10px 0; border: none; border-radius: 15px; font-size: 16px; cursor: pointer; transition: background 0.3s; font-weight: bold; }
+        .btn:hover { background-color: #FFB6C1; }
+        .hidden { display: none; }
+        .result-box { background-color: #FFF8DC; padding: 20px; border-radius: 15px; margin-top: 20px; line-height: 1.6; text-align: left; }
+        .result-img { width: 100%; border-radius: 15px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .result-box h3 { font-size: 18px; color: #d2691e; margin-top: 20px; margin-bottom: 10px; border-bottom: 2px dashed #FFD1DC; padding-bottom: 5px; }
+        .result-box p { margin: 5px 0; white-space: pre-line; }
+        .result-desc-main { font-weight: bold; font-size: 16px; text-align: center; margin-bottom: 15px !important; color: #8b4513; }
+        .emoji { font-size: 40px; margin-bottom: 10px; }
+        .progress { font-size: 14px; color: #888; margin-bottom: 15px; }
+    </style>
+    <!-- 수파베이스 라이브러리 추가 -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<div class="container" id="start-page">
+    <div class="emoji">😻</div>
+    <h1>우리 고양이의 진짜 속마음은?<br>찰떡 궁합 냥BTI 테스트 🐾</h1>
+    <p>8가지 질문으로 알아보는 냥님의 정확한 성격!</p>
+    <button class="btn" onclick="startTest()">테스트 시작하기 🚀</button>
+</div>
+
+<div class="container hidden" id="question-page">
+    <div class="emoji">💭</div>
+    <div class="progress" id="progress-text">1 / 8</div>
+    <h1 id="question-text">질문이 여기에 표시됩니다.</h1>
+    <button class="btn" id="answer-a" onclick="nextQuestion('A')">답변 A</button>
+    <button class="btn" id="answer-b" onclick="nextQuestion('B')">답변 B</button>
+</div>
+
+<div class="container hidden" id="result-page">
+    <div class="emoji" id="result-emoji">🏆</div>
+    <h1 id="result-title">결과 타이틀</h1>
+    <img id="result-image" src="" alt="고양이 캐릭터 일러스트" class="result-img hidden">
+    <div class="result-box">
+        <p class="result-desc-main" id="result-desc">결과 메인 설명</p>
+        
+        <h3>✨ 냥님 세부 특징</h3>
+        <p id="result-traits">특징 내용</p>
+        
+        <h3>💡 맞춤 집사 가이드</h3>
+        <p id="result-guide">가이드 내용</p>
+    </div>
+    
+    <!-- 데이터 수집용 폼 추가 -->
+    <div id="story-form-box" style="margin-top: 20px; padding: 20px; background: #e6e6fa; border-radius: 15px; text-align: left;">
+        <h3 style="margin-top:0; color: #4b0082; border-bottom: none;">📖 나만의 고양이 동화책 만들기</h3>
+        <p style="font-size: 14px; margin-bottom: 15px; color: #333;">냥BTI 결과와 외모를 바탕으로 1페이지를 무료로 생성해 드립니다!</p>
+        <input type="text" id="cat-name" placeholder="고양이 이름 (예: 체다)" style="width: 90%; padding: 12px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ccc; font-family: inherit;">
+        <input type="text" id="cat-appearance" placeholder="외모 특징 (예: 치즈 태비, 턱시도, 카프치노 주둥이)" style="width: 90%; padding: 12px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ccc; font-family: inherit;">
+        <input type="email" id="user-email" placeholder="결과를 받을 이메일 주소" style="width: 90%; padding: 12px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #ccc; font-family: inherit;">
+        <button class="btn" style="background-color: #9370db; color: white; margin: 0;" onclick="submitStoryRequest()">맞춤형 동화책 무료 생성 신청 🚀</button>
+    </div>
+
+    <button class="btn" style="margin-top: 15px;" onclick="location.reload()">테스트 다시하기 🔄</button>
+</div>
+
+<script>
+    // 수파베이스 초기화 (발급받은 URL과 키값으로 수정 필수)
+    const SUPABASE_URL = 'https://cwirwrwghbawhwitsqof.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3aXJ3cndnaGJhd2h3aXRzcW9mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA5NDAxMDYsImV4cCI6MjEwNjUxNjEwNn0.PFdZWQdPcqN-Ppc77TWYfoT7s7nu0Cl-czQcOyxqhrg';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    const questions = [
+        { q: "거실 한가운데 낯선 택배 상자가 놓여 있다면? 📦", a: "호기심 폭발! 바로 다가가 냄새를 맡고 쏙 들어간다 🐈", b: "안전이 최우선! 멀찍이서 지켜보며 상황을 살핀다 🧐" },
+        { q: "탁자 위에 작은 물건들이 어지럽게 놓여 있다면? 🧶", a: "우당탕탕! 앞발로 툭툭 건드려 떨어뜨려야 직성이 풀린다 🐾", b: "사뿐사뿐~ 물건을 하나도 건드리지 않고 요리조리 피해서 간다 👑" },
+        { q: "집사가 거실 바닥에 편안하게 누워 있을 때? 🛌", a: "기다렸다는 듯 배 위로 올라와 꾹꾹이를 하며 애정을 과시한다 💖", b: "적당한 거리를 두고 누워 지긋이 집사를 바라만 본다 👁️" },
+        { q: "처음 보는 신기한 낚싯대 장난감을 흔들어 주면? 🎣", a: "동공 지진! 즉시 펄쩍펄쩍 뛰어오르며 사냥꾼으로 변신한다 ⚡", b: "제자리에 앉아 눈동자만 까딱거리며 타이밍을 치밀하게 계산한다 🧠" },
+        { q: "장롱 위나 상자 속, 자신만의 아지트에서 쉴 때 다가가면? 🏠", a: "반갑게 골골송을 부르며 더 만져달라고 머리를 들이민다 🎶", b: "이곳은 내 구역! 귀찮은 듯 꼬리로 툭툭 치며 거리를 유지한다 🛑" },
+        { q: "초인종이 울리고 낯선 손님이 집에 방문했을 때? 🚪", a: "꼬리를 바짝 세우고 현관으로 마중 나가 누구인지 확인한다 🐾", b: "후다닥 침대 밑이나 은신처로 숨어 안전을 확보한다 🫣" },
+        { q: "밤이 깊어 집사가 불을 끄고 잠자리에 누웠을 때? 🌙", a: "슬며시 다가와 배 위나 팔베개를 차지하고 잠을 청한다 🛌", b: "캣타워 꼭대기나 푹신한 전용 방석 등 나만의 지정석으로 간다 🏰" },
+        { q: "집사가 빗이나 발톱깎이를 들고 은밀하게 다가갈 때? ✂️", a: "호기심을 보이며 냄새를 맡고 얌전히 집사의 손길을 받아들인다 🛁", b: "귀신같이 눈치채고 도망가거나 단호한 솜방망이 펀치를 날린다 🥊" }
+    ];
+
+    const results = {
+        "A_high": { 
+            title: "무릎 껌딱지 애교냥 (ESFJ)", 
+            desc: "집사 껌딱지 그 자체! 넘치는 애교로 피로를 녹여주는 사랑스러운 성격이다.",
+            traits: "✔️ 어딜 가든 졸졸 따라다니는 그림자 냥\n✔️ 낯선 사람에게도 호의적이고 꼬리를 바짝 세움\n✔️ 스킨십을 좋아하며 무한 골골송을 재생함",
+            guide: "외로움을 잘 타는 성격이므로 혼자 두는 시간을 최소화해야 한다. 퇴근 후에는 부드러운 스킨십과 애정 표현을 듬뿍 해주는 것이 필수다.",
+            emoji: "😻",
+            img: "watermarked_img_11260233114340603011.png"
+        },
+        "B_high": { 
+            title: "마이웨이 시크냥 (INTJ)", 
+            desc: "독립심 강하고 귀찮은 건 딱 질색! 밀당의 고수이자 고독한 낭만파다.",
+            traits: "✔️ 만지는 부위와 시간이 철저히 정해져 있음\n✔️ 이름을 불러도 귀만 쫑긋하고 대답은 생략함\n✔️ 가끔 엉뚱하게 혼자 우다다를 하며 스트레스를 품",
+            guide: "고양이가 보내는 거절 신호(꼬리 치기, 귀 마징가)를 정확히 읽어야 한다. 먼저 다가올 때까지 기다려주는 쿨한 집사가 되어야 신뢰를 얻을 수 있다.",
+            emoji: "🐈‍‍⬛",
+            img: "watermarked_img_13600835060773844094.png"
+        },
+        "Mixed_A": { 
+            title: "우당탕탕 호기심냥 (ENTP)", 
+            desc: "에너지 뿜뿜! 세상 모든 것이 신기하고 재미있는 구역의 장난꾸러기다.",
+            traits: "✔️ 새로운 박스나 비닐봉지는 무조건 1순위로 검열함\n✔️ 닫힌 문을 참지 못하고 열어달라고 시위함\n✔️ 눈에 띄는 물건은 일단 솜방망이로 건드려 봄",
+            guide: "위험한 물건은 미리 치워두는 것이 좋다. 하루 15분 이상 하드코어 낚싯대 놀이로 체력을 방전시켜 주지 않으면 밤에 우다다 테러를 당할 수 있다.",
+            emoji: "😼",
+            img: "watermarked_img_2996950475345330743.png"
+        },
+        "Mixed_B": { 
+            title: "신중한 관찰자냥 (ISFJ)", 
+            desc: "루비처럼 조심스럽고 신중한 평화주의자! 한 번 마음을 열면 변치 않는 사랑을 준다.",
+            traits: "✔️ 낯선 소리나 물건에 예민하고 조심스럽게 접근함\n✔️ 지정된 애착 방석이나 자신만의 안전 지대를 선호함\n✔️ 집사 옆 50cm 거리를 유지하며 조용히 지켜봄",
+            guide: "큰 소리를 내거나 억지로 안으려 하는 것은 금물이다. 바닥에 누워 눈키스(천천히 눈 깜빡이기)를 자주 보내며 안전한 존재임을 꾸준히 증명해야 한다.",
+            emoji: "🧐",
+            img: "watermarked_img_471997745580019650.png"
+        }
+    };
+
+    let currentStep = 0;
+    let scoreA = 0;
+
+    function startTest() {
+        document.getElementById('start-page').classList.add('hidden');
+        document.getElementById('question-page').classList.remove('hidden');
+        showQuestion();
+    }
+
+    function showQuestion() {
+        document.getElementById('progress-text').innerText = (currentStep + 1) + " / " + questions.length;
+        document.getElementById('question-text').innerText = questions[currentStep].q;
+        document.getElementById('answer-a').innerText = questions[currentStep].a;
+        document.getElementById('answer-b').innerText = questions[currentStep].b;
+    }
+
+    function nextQuestion(choice) {
+        if (choice === 'A') scoreA++;
+        currentStep++;
+        
+        if (currentStep < questions.length) {
+            showQuestion();
+        } else {
+            showResult();
+        }
+    }
+
+    function showResult() {
+        document.getElementById('question-page').classList.add('hidden');
+        document.getElementById('result-page').classList.remove('hidden');
+
+        let finalResult;
+        if (scoreA >= 6) finalResult = results["A_high"];
+        else if (scoreA <= 2) finalResult = results["B_high"];
+        else if (scoreA === 4 || scoreA === 5) finalResult = results["Mixed_A"];
+        else finalResult = results["Mixed_B"];
+
+        document.getElementById('result-title').innerText = finalResult.title;
+        document.getElementById('result-desc').innerText = finalResult.desc;
+        document.getElementById('result-traits').innerText = finalResult.traits;
+        document.getElementById('result-guide').innerText = finalResult.guide;
+        document.getElementById('result-emoji').innerText = finalResult.emoji;
+        
+        const resultImg = document.getElementById('result-image');
+        resultImg.src = finalResult.img;
+        resultImg.classList.remove('hidden');
+    }
+
+    // 수파베이스 데이터 전송 함수
+    async function submitStoryRequest() {
+        const catName = document.getElementById('cat-name').value;
+        const catAppearance = document.getElementById('cat-appearance').value;
+        const userEmail = document.getElementById('user-email').value;
+        const mbtiResult = document.getElementById('result-title').innerText; 
+
+        if(!catName || !catAppearance || !userEmail) {
+            alert("정보를 모두 입력해 주세냥! 🐾");
+            return;
+        }
+
+        try {
+            const { data, error } = await supabaseClient
+            .from('user_cat_stories')
+                .insert([
+                    { 
+                        user_email: userEmail, 
+                        cat_name: catName, 
+                        mbti_result: mbtiResult, 
+                        cat_appearance: catAppearance 
+                    }
+                ]);
+
+            if (error) throw error;
+            
+            alert("신청이 완료되었습니다! 수파베이스 장부에 데이터가 성공적으로 꽂혔습니다. 🎉");
+            
+        } catch (error) {
+            console.error("수파베이스 전송 에러:", error);
+            alert("앗, 데이터 전송 중 오류가 발생했어요. 주소와 키값을 다시 확인해 보세요.");
+        }
+    }
+</script>
+
+</body>
+</html>
