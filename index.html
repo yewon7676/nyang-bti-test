@@ -166,7 +166,7 @@
         resultImg.classList.remove('hidden');
     }
 
-    // 수파베이스 데이터 전송 함수
+    // 수파베이스 데이터 전송 및 Make 알림 함수
     async function submitStoryRequest() {
         const catName = document.getElementById('cat-name').value;
         const catAppearance = document.getElementById('cat-appearance').value;
@@ -176,7 +176,10 @@
         if(!catName || !catAppearance || !userEmail) {
             alert("정보를 모두 입력해 주세냥! 🐾");
             return;
-            try {
+        }
+
+        try {
+            // 1. 수파베이스 장부에 데이터 저장
             const { data, error } = await supabaseClient
                 .from('user_cat_stories')
                 .insert([
@@ -190,7 +193,7 @@
 
             if (error) throw error;
             
-            // ============== [여기서부터 새로 추가할 코드] ==============
+            // 2. Make로 알림 전송 (새로 추가된 부분)
             await fetch('https://hook.us2.make.com/dzfwoeq9s8ah7937fu18l4u2mogi7x41', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -201,29 +204,11 @@
                     mbti_result: mbtiResult 
                 })
             });
-            // ============== [여기까지 추가] ==============
 
-            alert("신청이 완료되었습니다! 수파베이스 장부에 데이터가 성공적으로 꽂혔습니다. 🎉");
-        }
-
-        try {
-            const { data, error } = await supabaseClient
-            .from('user_cat_stories')
-                .insert([
-                    { 
-                        user_email: userEmail, 
-                        cat_name: catName, 
-                        mbti_result: mbtiResult, 
-                        cat_appearance: catAppearance 
-                    }
-                ]);
-
-            if (error) throw error;
-            
-            alert("신청이 완료되었습니다! 수파베이스 장부에 데이터가 성공적으로 꽂혔습니다. 🎉");
+            alert("신청이 완료되었습니다! 수파베이스와 Make에 모두 성공적으로 전달되었습니다. 🎉");
             
         } catch (error) {
-            console.error("수파베이스 전송 에러:", error);
+            console.error("데이터 전송 에러:", error);
             alert("앗, 데이터 전송 중 오류가 발생했어요. 주소와 키값을 다시 확인해 보세요.");
         }
     }
