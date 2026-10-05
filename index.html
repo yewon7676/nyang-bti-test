@@ -176,6 +176,34 @@
         if(!catName || !catAppearance || !userEmail) {
             alert("정보를 모두 입력해 주세냥! 🐾");
             return;
+            try {
+            const { data, error } = await supabaseClient
+                .from('user_cat_stories')
+                .insert([
+                    { 
+                        user_email: userEmail, 
+                        cat_name: catName, 
+                        mbti_result: mbtiResult, 
+                        cat_appearance: catAppearance 
+                    }
+                ]);
+
+            if (error) throw error;
+            
+            // ============== [여기서부터 새로 추가할 코드] ==============
+            await fetch('https://hook.us2.make.com/dzfwoeq9s8ah7937fu18l4u2mogi7x41', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    cat_name: catName, 
+                    cat_appearance: catAppearance, 
+                    user_email: userEmail,
+                    mbti_result: mbtiResult 
+                })
+            });
+            // ============== [여기까지 추가] ==============
+
+            alert("신청이 완료되었습니다! 수파베이스 장부에 데이터가 성공적으로 꽂혔습니다. 🎉");
         }
 
         try {
